@@ -441,7 +441,7 @@ const VisitLogReport = () => {
             <div style={{ display: 'flex', flexDirection: 'column', gap: 18, marginBottom: 18 }}>
               <div>
                 <label style={{ fontWeight: 500, marginBottom: 6, display: 'block' }}>Select User</label>
-                <div style={{ display: 'flex', alignItems: 'left', gap: 8, marginBottom: 10 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
                   <FaSearch style={{ color: theme === 'dark' ? '#a4c2f4' : '#1976d2', fontSize: 16 }} />
                   <input
                     type="text"

@@ -13,40 +13,63 @@ import { GoogleMap, Marker, useJsApiLoader } from "@react-google-maps/api";
 
 // No need to use api for download, just use the base URL
 
-// Set your backend base URL here
-const BACKEND_BASE_URL = 'http://202.51.3.49:8002/api';
-async function downloadFile(url) {
+// Download attendance report as CSV
+async function downloadFile(userId, year, monthIndex) {
   try {
-    console.log('downloadFile');
-    
-    // Use the api instance which automatically includes Authorization and _id headers
+    // ✅ Validate required parameters
+    if (!userId) {
+      alert("Please select a user first.");
+      return;
+    }
+    if (!year || !monthIndex) {
+      alert("Please select a valid year and month.");
+      return;
+    }
+
+    const url = `/attendance/download?userId=${userId}&year=${year}&monthIndex=${monthIndex}`;
+    console.log("Download URL:", url);
+
     const response = await api.get(url, {
-      responseType: 'blob', // Important for file downloads
+      responseType: "blob", // Important for file downloads
     });
-    
-    // Create blob from response data
-    const blob = new Blob([response.data], { 
-      type: response.headers['content-type'] || 'text/csv' 
+
+    // ✅ Create a blob from response
+    const blob = new Blob([response.data], {
+      type: response.headers["content-type"] || "text/csv",
     });
-    
-    // Create download link
+
+    // ✅ Extract filename from Content-Disposition header
+    let filename = "attendance-report.csv";
+    const contentDisposition = response.headers["content-disposition"];
+    if (contentDisposition) {
+      // Match filename= or filename="..."
+      const match = contentDisposition.match(/filename\*?=(?:UTF-8''|")?([^;"']+)/i);
+      if (match && match[1]) {
+        filename = decodeURIComponent(match[1].replace(/['"]/g, "").trim());
+      }
+    }
+    console.log("Extracted filename:", filename);
+
+    // ✅ Trigger browser download
     const downloadUrl = window.URL.createObjectURL(blob);
-    const link = document.createElement('a');
+    const link = document.createElement("a");
     link.href = downloadUrl;
-    link.download = 'attendance-report.csv';
-    
-    // Trigger download
+    link.download = filename;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-    
-    // Clean up
     window.URL.revokeObjectURL(downloadUrl);
-    
-    console.log('Download completed successfully');
+
+    console.log("Download completed successfully");
   } catch (error) {
-    console.error('Download failed:', error);
-    alert('Download failed. Please try again.');
+    console.error("Download failed:", error);
+    if (error.response?.status === 404) {
+      alert("No attendance data found for the selected user and date range.");
+    } else if (error.response?.status === 400) {
+      alert("Invalid parameters. Please check your selection.");
+    } else {
+      alert("Download failed. Please try again.");
+    }
   }
 }
 
@@ -431,21 +454,7 @@ function formatDate(dateStr) {
                 style={{ fontWeight: 600, color: '#111', background: 'var(--primary)', border: 'none', fontSize: 15 }}
                 // disabled={downloading}
                 onClick={() => {
-                  // Build the download URL using the exact same logic as the API call
-                  let url = `/attendance/download?userId=${selectedUser}&year=2025&month=5`;
-                  
-                  if (filterType === 'Custom') {
-                    if (customFromDate && customToDate) {
-                      const fromStr = customFromDate.toISOString().slice(0, 10);
-                      const toStr = customToDate.toISOString().slice(0, 10);
-                      url += `&type=custom&dateType=${dateType}&year=${selectedYear}&monthIndex=${selectedMonthIndex}&from=${fromStr}&to=${toStr}`;
-                    }
-                  } else {
-                    url += `&type=monthly&dateType=${dateType}&year=${selectedYear}&monthIndex=${selectedMonthIndex}`;
-                  }
-                  
-                  console.log('Download URL:', url);
-                  downloadFile(url);
+                  downloadFile(selectedUser, selectedYear, selectedMonthIndex);
                 }}
               >
                 <FaDownload /> {/* Downloading... */}
