@@ -7,6 +7,8 @@ import { GoogleMap, Marker, InfoWindow, useJsApiLoader } from "@react-google-map
 import BikramSambat from "bikram-sambat-js";
 import { AdToBsDate } from "../utils/AdToBsConverter.js";
 
+let profileImage = '';
+
 // Get current Nepali year
 const getCurrentBSYear = () => {
   const todayAD = new Date().toISOString().slice(0, 10);
@@ -147,15 +149,15 @@ const UserVisitLogDetails = () => {
   // Download CSV
   const handleDownload = async () => {
     try {
-      console.log(from);
-      console.log(AdToBsDate("2025-02-28"));
+      // console.log(from);
+      // console.log(AdToBsDate("2025-02-28"));
       const res = await api.get(`/visitLogs/download?visitLogId=${userId}&from=${from}&to=${to}`, { responseType: 'blob' });
       const blob = new Blob([res.data]);
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      console.log(`From = ${AdToBsDate(from)}`);
-      console.log(`To = ${AdToBsDate(to)}`);
+      // console.log(`From = ${AdToBsDate(from)}`);
+      // console.log(`To = ${AdToBsDate(to)}`);
       link.setAttribute('download', `${user.username}-visitlog-report-${from}-to-${to}.csv`); // Let browser use server's filename
       document.body.appendChild(link);
       link.click();
@@ -215,28 +217,12 @@ const UserVisitLogDetails = () => {
   if (error) {
     return <div style={{ padding: 32, color: '#e53935', fontWeight: 600, fontSize: 18 }}>{error}</div>;
   }
-
+  console.log(`profileImage = ${profileImage}`);
   return (
     <div style={{ padding: 24, background: theme === 'dark' ? '#181c20' : '#f7faff', minHeight: '100vh' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          {user && (
-            <img 
-              src={user.profileImage} 
-              alt={user.username}
-              style={{ 
-                width: 48, 
-                height: 48, 
-                borderRadius: '50%', 
-                objectFit: 'cover',
-                border: '2px solid #e0e0e0'
-              }}
-              onError={(e) => {
-                e.target.onerror = null;
-                e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(user.username)}&size=48&background=random`;
-              }}
-            />
-          )}
+        <img src={profileImage} alt={user.username} style={{ width: 56, height: 56, borderRadius: '50%', objectFit: 'cover', border: '2px solid #a4c2f4', background: '#eee' }} onError={e => { e.target.onerror = null; e.target.src = "https://ui-avatars.com/api/?name=" + encodeURIComponent(user.username); }} />
           <div>
             <h2 style={{ fontWeight: 700, fontSize: 22, color: theme === 'dark' ? '#fff' : '#23272b', margin: 0 }}>
               {user ? user.username : "User Visit Log"}
@@ -266,6 +252,7 @@ const UserVisitLogDetails = () => {
           </button>
         </div>
       </div>
+
       {/* Filter Popup */}
       {showFilter && (
         <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', background: 'rgba(0,0,0,0.18)', zIndex: 2000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -354,6 +341,9 @@ const UserVisitLogDetails = () => {
                   setError("");
                   try {
                     const res = await api.get(`/visitLogs?visitLogId=${selectedUserId}&from=${fromAD}&to=${toAD}`);
+                    profileImage = res.data.visitLogs.profileImage;
+                    console.log(profileImage);
+                    // console.log(res.data);
                     setVisitLog(res.data.visitLogs);
                   } catch (err) {
                     setError(err?.response?.data?.message || err?.message || "Failed to fetch user visit logs");
@@ -390,7 +380,7 @@ const UserVisitLogDetails = () => {
                 <th style={{ padding: '8px 6px', textAlign: 'center', borderRight: `1.5px solid ${theme === 'dark' ? '#313843' : '#cfd8dc'}` }}>POC Name</th>
                 <th style={{ textAlign: 'center', borderRight: `1.5px solid ${theme === 'dark' ? '#313843' : '#cfd8dc'}` }}>Type</th>
                 <th style={{ textAlign: 'center', borderRight: `1.5px solid ${theme === 'dark' ? '#313843' : '#cfd8dc'}` }}>Visit Count</th>
-                <th style={{ textAlign: 'center', borderRight: `1.5px solid ${theme === 'dark' ? '#313843' : '#cfd8dc'}` }}>Time</th>
+                <th style={{ textAlign: 'center', borderRight: `1.5px solid ${theme === 'dark' ? '#313843' : '#cfd8dc'}` }}>Date</th>
                 <th style={{ textAlign: 'center', borderRight: `1.5px solid ${theme === 'dark' ? '#313843' : '#cfd8dc'}` }}>Category</th>
                 <th style={{ textAlign: 'center', borderRight: `1.5px solid ${theme === 'dark' ? '#313843' : '#cfd8dc'}` }}>Number</th>
                 <th style={{ textAlign: 'left', borderRight: `1.5px solid ${theme === 'dark' ? '#313843' : '#cfd8dc'}` }}>Address</th>
